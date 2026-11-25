@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101d30">
+  <meta name="description" content="ردیابی زندهٔ موقعیت هواپیماها روی نقشه، با رابط کاملاً فارسی">
+  <title>رادار پرواز | ردیابی زندهٔ آسمان</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="صفحهٔ اصلی رادار پرواز">
+      <span class="brand-icon" aria-hidden="true">✈</span>
+      <span><strong>رادار پرواز</strong><small>یک پنجره رو به آسمان</small></span>
+    </a>
+    <label class="search">
+      <span class="sr-only">جستجوی شماره پرواز</span>
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"></circle><path d="m15 15 5 5"></path></svg>
+      <input id="search" type="search" placeholder="جستجوی شماره پرواز..." autocomplete="off" spellcheck="false">
+    </label>
+    <div class="connection" role="status"><span id="status-dot" class="status-dot"></span><span id="connection-text">در حال اتصال</span></div>
+  </header>
+
+  <main class="workspace">
+    <aside id="sidebar" class="sidebar" aria-label="اطلاعات پرواز">
+      <div class="sidebar-heading"><span class="eyebrow">آسمان، همین حالا</span><h1>پروازها را دنبال کنید</h1><p>روی هر هواپیما بزنید تا جزئیات آن را ببینید.</p></div>
+      <section id="placeholder" class="placeholder">
+        <div class="radar" aria-hidden="true"><span>✈</span></div>
+        <h2>پرواز بعدی را کشف کنید</h2>
+        <p id="selection-hint">نقشه را جابه‌جا کنید یا با شناسهٔ پرواز جستجو کنید.</p>
+      </section>
+      <section id="details" class="details" aria-labelledby="detail-callsign" hidden>
+        <div class="detail-top"><span class="eyebrow">پرواز انتخاب‌شده</span><button id="close-details" class="icon-button" type="button" aria-label="بستن جزئیات پرواز">×</button></div>
+        <h2 id="detail-callsign" dir="auto"></h2>
+        <p id="detail-status" class="flight-state"></p>
+        <dl>
+          <div><dt>کشور ثبت هواپیما</dt><dd id="detail-country"></dd></div>
+          <div><dt>ارتفاع بارومتریک</dt><dd id="detail-altitude"></dd></div>
+          <div><dt>سرعت زمینی</dt><dd id="detail-speed"></dd></div>
+          <div><dt>جهت حرکت</dt><dd id="detail-heading"></dd></div>
+          <div><dt>کد شناسایی هواپیما</dt><dd id="detail-icao" dir="ltr"></dd></div>
+        </dl>
+        <button id="locate-flight" class="primary-button" type="button">نمایش روی نقشه</button>
+        <p class="detail-note">کشور ثبت هواپیما، لزوماً مبدأ پرواز نیست.</p>
+      </section>
+      <div class="sidebar-footer"><div class="legend"><span><i></i> در حال پرواز</span><span><i class="ground"></i> روی زمین</span></div><p>پوشش داده به گیرنده‌های اُپن‌اسکای وابسته است؛ ممکن است بعضی پروازها دیده نشوند.</p><a href="https://opensky-network.org/" target="_blank" rel="noopener noreferrer">منبع داده: شبکهٔ اُپن‌اسکای ↗</a></div>
+    </aside>
+
+    <section class="map-area" aria-label="نقشهٔ زندهٔ پروازها">
+      <div id="map" dir="ltr" aria-label="نقشهٔ موقعیت هواپیماها"></div>
+      <div class="map-toolbar">
+        <div class="map-summary"><span class="live-label"><i></i> موقعیت پروازها</span><strong><span id="visible-count">۰</span> <small>هواپیما در نمای فعلی</small></strong><span id="total-count">در انتظار داده‌های زنده</span></div>
+        <div class="map-actions"><button id="home-view" type="button">بازگشت به ایران</button><label><input id="airborne-only" type="checkbox"> فقط در حال پرواز</label></div>
+      </div>
+      <div id="banner" class="banner" role="status" aria-live="polite">در حال دریافت اطلاعات پروازها…</div>
+      <div id="empty-state" class="empty-state" hidden>در این محدوده پروازی پیدا نشد؛ جستجو را تغییر دهید یا نقشه را جابه‌جا کنید.</div>
+      <div class="map-bottom"><span id="last-update">آخرین به‌روزرسانی: —</span><span>زمان‌ها به وقت تهران</span></div>
+    </section>
+  </main>
+  <noscript><div class="noscript">برای نمایش نقشه و پروازها، جاوااسکریپت مرورگر را فعال کنید.</div></noscript>
+</body>
+</html>
